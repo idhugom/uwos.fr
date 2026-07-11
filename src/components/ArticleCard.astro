@@ -1,0 +1,153 @@
+---
+import { categoryOf } from '../lib/taxonomy.js';
+import { formatDate, imgSrcset, pad } from '../lib/format.js';
+
+interface Props {
+  entry: any;
+  variant?: 'feature' | 'standard' | 'compact' | 'wide';
+  index?: number;
+  eager?: boolean;
+  showExcerpt?: boolean;
+}
+const { entry, variant = 'standard', index, eager = false, showExcerpt = false } = Astro.props;
+const d = entry.data;
+const cat = categoryOf(d.category);
+const href = `/${entry.id}/`;
+const img = imgSrcset(d.image);
+const loading = eager ? 'eager' : 'lazy';
+---
+
+<article class:list={['card', `card--${variant}`]} data-reveal>
+  <a href={href} class="card__link" data-cursor>
+    <div class="card__media">
+      {img ? (
+        <img
+          src={img.src}
+          srcset={img.srcset}
+          sizes={variant === 'feature' || variant === 'wide' ? '(max-width: 800px) 100vw, 60vw' : '(max-width: 700px) 90vw, 30vw'}
+          alt={d.imageAlt}
+          width="1200"
+          height="800"
+          loading={loading}
+          decoding="async"
+          class="card__img"
+        />
+      ) : (
+        <div class="card__placeholder"><span>{cat.label}</span></div>
+      )}
+      <span class="card__cat">{cat.label}</span>
+      {typeof index === 'number' && <span class="card__num">{pad(index)}</span>}
+    </div>
+    <div class="card__body">
+      <h3 class="card__title">{d.title}</h3>
+      {showExcerpt && d.excerpt && <p class="card__excerpt">{d.excerpt}</p>}
+      <div class="card__meta">
+        <span>{formatDate(d.date)}</span>
+        <span class="card__dot">·</span>
+        <span class="card__more">Lire →</span>
+      </div>
+    </div>
+  </a>
+</article>
+
+<style>
+  .card { position: relative; }
+  .card__link { display: flex; flex-direction: column; gap: 0.9rem; height: 100%; }
+
+  .card__media {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r);
+    aspect-ratio: 3 / 2;
+    background: var(--surface);
+    isolation: isolate;
+  }
+  .card__img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s var(--ease), filter 0.6s;
+    filter: saturate(1.02) contrast(1.02);
+  }
+  .card__link:hover .card__img { transform: scale(1.06); }
+  .card__media::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, color-mix(in oklab, var(--void) 72%, transparent));
+    opacity: 0.5;
+    transition: opacity 0.5s;
+  }
+  .card__link:hover .card__media::after { opacity: 0.2; }
+
+  .card__placeholder {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(120% 120% at 20% 10%, color-mix(in oklab, var(--orange) 30%, transparent), transparent 60%),
+      linear-gradient(140deg, var(--surface-2), var(--ink));
+  }
+  .card__placeholder span {
+    font-family: var(--font-display); font-weight: 800;
+    color: color-mix(in oklab, var(--paper) 22%, transparent);
+    text-transform: uppercase; letter-spacing: -0.02em; font-size: var(--step-2);
+  }
+
+  .card__cat {
+    position: absolute; top: 0.8rem; left: 0.8rem;
+    z-index: 2;
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.4em 0.75em;
+    background: color-mix(in oklab, var(--void) 55%, transparent);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    color: var(--ember);
+  }
+  .card__num {
+    position: absolute; bottom: 0.6rem; right: 0.9rem; z-index: 2;
+    font-family: var(--font-display); font-weight: 800;
+    font-size: var(--step-3); color: color-mix(in oklab, var(--paper) 80%, transparent);
+    line-height: 1; -webkit-text-stroke: 1px var(--void);
+  }
+
+  .card__title {
+    font-size: var(--step-1);
+    line-height: 1.08;
+    transition: color 0.3s;
+  }
+  .card__link:hover .card__title { color: var(--orange); }
+  .card__excerpt { color: var(--muted); font-size: var(--step--1); line-height: 1.55; }
+  .card__meta {
+    display: flex; align-items: center; gap: 0.5em;
+    color: var(--faint); font-size: var(--step--2);
+    font-family: var(--font-mono); letter-spacing: 0.04em;
+    margin-top: auto;
+  }
+  .card__more { color: var(--orange); }
+
+  /* ---- Feature ---- */
+  .card--feature .card__media { aspect-ratio: 16 / 10; border-radius: var(--r-lg); }
+  .card--feature .card__title { font-size: var(--step-4); }
+  .card--feature .card__excerpt { font-size: var(--step-0); max-width: 60ch; }
+
+  /* ---- Wide (image left, text right) ---- */
+  .card--wide .card__link { flex-direction: row; align-items: stretch; gap: 1.5rem; }
+  .card--wide .card__media { flex: 0 0 44%; aspect-ratio: 4 / 3; }
+  .card--wide .card__body { display: flex; flex-direction: column; justify-content: center; padding-block: 0.3rem; }
+  .card--wide .card__title { font-size: var(--step-2); }
+
+  /* ---- Compact (small thumb) ---- */
+  .card--compact .card__link { flex-direction: row; gap: 1rem; align-items: center; }
+  .card--compact .card__media { flex: 0 0 92px; height: 92px; aspect-ratio: 1; border-radius: var(--r-sm); }
+  .card--compact .card__cat, .card--compact .card__num { display: none; }
+  .card--compact .card__title { font-size: var(--step-0); line-height: 1.2; }
+  .card--compact .card__meta { font-size: 0.66rem; }
+
+  @media (max-width: 620px) {
+    .card--wide .card__link { flex-direction: column; }
+    .card--wide .card__media { flex-basis: auto; aspect-ratio: 3 / 2; }
+    .card--feature .card__title { font-size: var(--step-3); }
+  }
+</style>

@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../lib/site.js';
+---
+
+<BaseLayout title="Mentions légales" description="Mentions légales du site UWOS." noindex={true}>
+  <section class="wrap-read legal">
+    <span class="kicker">Informations</span>
+    <h1>Mentions légales</h1>
+
+    <h2>Éditeur du site</h2>
+    <p>Le site <strong>{SITE.domain}</strong> est édité par UWOS.<br />Contact&nbsp;: <a href="/a-propos/" class="link-underline">page contact</a>.</p>
+
+    <h2>Hébergement</h2>
+    <p>Ce site est hébergé par Cloudflare, Inc. — 101 Townsend St, San Francisco, CA 94107, États-Unis.</p>
+
+    <h2>Propriété intellectuelle</h2>
+    <p>L'ensemble des contenus (textes, visuels, éléments graphiques) présents sur ce site sont protégés par le droit d'auteur. Toute reproduction, même partielle, est soumise à autorisation préalable.</p>
+
+    <h2>Données personnelles</h2>
+    <p>Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression des données vous concernant. Ce site ne collecte aucune donnée personnelle sans votre consentement explicite.</p>
+
+    <p class="legal__note">Document à compléter avec les informations légales définitives (dénomination sociale, SIREN, directeur de la publication).</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal { padding-top: clamp(3.5rem, 8vw, 6rem); }
+  .legal h1 { font-size: var(--step-5); margin-top: 0.5rem; }
+  .legal h2 { font-size: var(--step-2); margin-top: 2.4rem; margin-bottom: 0.6rem; }
+  .legal p { color: var(--smoke); line-height: 1.7; }
+  .legal a { color: var(--orange); }
+  .legal__note { margin-top: 3rem; padding: 1rem 1.2rem; border: 1px dashed var(--line-strong); border-radius: var(--r); font-size: var(--step--1); color: var(--faint); }
+</style>

@@ -1,0 +1,86 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ArticleCard from '../../../components/ArticleCard.astro';
+import { CATEGORIES, categoryOf } from '../../../lib/taxonomy.js';
+import { SITE } from '../../../lib/site.js';
+
+export async function getStaticPaths({ paginate }) {
+  const all = await getCollection('articles');
+  const slugs = [...new Set(all.map((e) => e.data.category))];
+  return slugs.flatMap((slug) => {
+    const entries = all
+      .filter((e) => e.data.category === slug)
+      .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+    return paginate(entries, { params: { category: slug }, props: { total: entries.length }, pageSize: 18 });
+  });
+}
+
+const { page, total } = Astro.props;
+const { category } = Astro.params;
+const cat = categoryOf(category);
+const others = CATEGORIES.filter((c) => c.slug !== category);
+const base = `/rubrique/${category}`;
+---
+
+<BaseLayout
+  title={`${cat.label} — ${cat.tagline}`}
+  description={`Tous nos articles ${cat.label} : ${cat.tagline}. ${total} guides complets et utiles sur UWOS.`}
+  canonical={page.currentPage === 1 ? `${base}/` : `${base}/${page.currentPage}/`}
+>
+  <section class="cat-hero wrap">
+    <nav class="crumbs" aria-label="Fil d'ariane">
+      <a href="/">Accueil</a><span>/</span><a href="/rubriques/">Rubriques</a>
+    </nav>
+    <span class="kicker">{cat.tagline}</span>
+    <h1>{cat.label}</h1>
+    <p class="cat-hero__count">{total} article{total > 1 ? 's' : ''}</p>
+
+    <div class="cat-nav" data-cursor>
+      {CATEGORIES.map((c) => (
+        <a href={`/rubrique/${c.slug}/`} class:list={['cat-chip', { 'is-active': c.slug === category }]}>{c.label}</a>
+      ))}
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="cat-grid">
+      {page.data.map((e, i) => <ArticleCard entry={e} index={(page.currentPage - 1) * 18 + i + 1} />)}
+    </div>
+
+    {page.lastPage > 1 && (
+      <nav class="pager" aria-label="Pagination">
+        {page.url.prev ? <a href={page.url.prev} class="pager__btn">← Précédent</a> : <span class="pager__btn is-disabled">← Précédent</span>}
+        <span class="pager__count">Page {page.currentPage} / {page.lastPage}</span>
+        {page.url.next ? <a href={page.url.next} class="pager__btn">Suivant →</a> : <span class="pager__btn is-disabled">Suivant →</span>}
+      </nav>
+    )}
+  </section>
+</BaseLayout>
+
+<style>
+  .cat-hero { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .crumbs { display: flex; gap: 0.6em; font-family: var(--font-mono); font-size: var(--step--2); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 1.5rem; }
+  .crumbs a { color: var(--ember); }
+  .cat-hero h1 { font-size: var(--step-6); margin-top: 0.5rem; }
+  .cat-hero__count { font-family: var(--font-mono); color: var(--faint); margin-top: 0.8rem; letter-spacing: 0.08em; }
+  .cat-nav { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 2rem; }
+  .cat-chip {
+    font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.05em;
+    padding: 0.5em 1em; border: 1px solid var(--line); border-radius: 100px; color: var(--muted);
+    transition: 0.3s;
+  }
+  .cat-chip:hover { border-color: var(--orange); color: var(--paper); }
+  .cat-chip.is-active { background: var(--orange); color: #000; border-color: var(--orange); }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .pager { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-top: 4rem; }
+  .pager__btn { font-family: var(--font-mono); font-size: var(--step--1); padding: 0.6em 1.2em; border: 1px solid var(--line-strong); border-radius: 100px; transition: 0.3s; }
+  .pager__btn:hover:not(.is-disabled) { background: var(--orange); color: #000; border-color: var(--orange); }
+  .pager__btn.is-disabled { opacity: 0.3; }
+  .pager__count { font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); }
+</style>

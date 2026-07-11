@@ -1,0 +1,113 @@
+---
+import { categoryOf } from '../lib/taxonomy.js';
+import { formatDateShort, pad } from '../lib/format.js';
+
+interface Props { entries: any[]; start?: number; }
+const { entries, start = 1 } = Astro.props;
+---
+
+<div class="fil" data-fil>
+  <div class="fil__preview" data-fil-preview aria-hidden="true"><img alt="" width="600" height="400" /></div>
+  <ol class="fil__list">
+    {entries.map((entry, i) => {
+      const d = entry.data;
+      const cat = categoryOf(d.category);
+      return (
+        <li class="fil__row" data-reveal>
+          <a href={`/${entry.id}/`} class="fil__link" data-img={d.image ? `${d.image}-600.webp` : ''}>
+            <span class="fil__num">{pad(start + i)}</span>
+            <span class="fil__title">{d.title}</span>
+            <span class="fil__cat">{cat.label}</span>
+            <span class="fil__date">{formatDateShort(d.date)}</span>
+            <span class="fil__arrow" aria-hidden="true">→</span>
+          </a>
+        </li>
+      );
+    })}
+  </ol>
+</div>
+
+<style>
+  .fil { position: relative; }
+  .fil__list { border-top: 1px solid var(--line); }
+  .fil__row { border-bottom: 1px solid var(--line); }
+  .fil__link {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    align-items: center;
+    gap: clamp(0.8rem, 2vw, 2rem);
+    padding-block: clamp(1rem, 2vw, 1.5rem);
+    transition: padding-left 0.4s var(--ease), color 0.3s;
+  }
+  .fil__link:hover { padding-left: 1rem; }
+  .fil__num { font-family: var(--font-mono); color: var(--faint); font-size: var(--step--1); }
+  .fil__title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: var(--step-1); line-height: 1.1; letter-spacing: -0.01em;
+    transition: color 0.3s;
+  }
+  .fil__link:hover .fil__title { color: var(--orange); }
+  .fil__cat { font-family: var(--font-mono); font-size: var(--step--2); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ember); }
+  .fil__date { font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); }
+  .fil__arrow { color: var(--orange); opacity: 0; transform: translateX(-8px); transition: opacity 0.3s, transform 0.3s; }
+  .fil__link:hover .fil__arrow { opacity: 1; transform: none; }
+
+  .fil__preview {
+    position: fixed;
+    top: 0; left: 0;
+    width: 320px; height: 214px;
+    border-radius: var(--r);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 90;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line-strong);
+    will-change: transform, opacity;
+  }
+  .fil__preview.is-visible { opacity: 1; }
+  .fil__preview img { width: 100%; height: 100%; object-fit: cover; }
+
+  @media (max-width: 760px) {
+    .fil__link { grid-template-columns: auto 1fr auto; gap: 0.8rem; }
+    .fil__cat { display: none; }
+    .fil__title { font-size: var(--step-0); }
+  }
+  @media (hover: none) { .fil__preview { display: none; } }
+</style>
+
+<script>
+  function initFil() {
+    if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    document.querySelectorAll('[data-fil]').forEach((root) => {
+      if (root.dataset.filReady) return;
+      root.dataset.filReady = '1';
+      const preview = root.querySelector('[data-fil-preview]');
+      const img = preview?.querySelector('img');
+      if (!preview || !img) return;
+      let raf = 0, tx = 0, ty = 0, cx = 0, cy = 0;
+      const move = (e) => {
+        tx = e.clientX; ty = e.clientY;
+        if (!raf) raf = requestAnimationFrame(follow);
+      };
+      const follow = () => {
+        cx += (tx - cx) * 0.16; cy += (ty - cy) * 0.16;
+        preview.style.transform = `translate(${cx}px, ${cy}px) translate(-50%,-50%) rotate(${(tx - cx) * 0.04}deg)`;
+        raf = Math.abs(tx - cx) > 0.5 || Math.abs(ty - cy) > 0.5 ? requestAnimationFrame(follow) : 0;
+      };
+      root.querySelectorAll('.fil__link').forEach((link) => {
+        const src = link.getAttribute('data-img');
+        if (!src) return;
+        link.addEventListener('mouseenter', () => {
+          img.src = src;
+          preview.classList.add('is-visible');
+        });
+        link.addEventListener('mouseleave', () => preview.classList.remove('is-visible'));
+      });
+      root.addEventListener('mousemove', move);
+    });
+  }
+  document.addEventListener('astro:page-load', initFil);
+</script>

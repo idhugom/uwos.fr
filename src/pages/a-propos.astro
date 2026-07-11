@@ -1,0 +1,78 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../lib/site.js';
+const all = await getCollection('articles');
+const stats = [
+  { n: all.length, l: 'articles publiés' },
+  { n: SITE.categories.length, l: 'rubriques' },
+  { n: '100%', l: 'contenu vérifié' },
+  { n: '0', l: 'blabla inutile' },
+];
+---
+
+<BaseLayout title="À propos" description="UWOS, le magazine généraliste qui décode le quotidien. Notre manifeste, notre méthode.">
+  <section class="about-hero wrap">
+    <span class="kicker" data-reveal>Le manifeste</span>
+    <h1 data-reveal>Décoder le quotidien,<br /><em>sans vous faire perdre votre temps.</em></h1>
+    <p class="about-hero__lead" data-reveal>
+      UWOS est un média généraliste indépendant. On y parle de tout ce qui fait la vie de tous les jours —
+      maison, argent, bien-être, travail, tech, cuisine — avec une seule obsession&nbsp;: vous donner une
+      réponse claire, complète et honnête. Pas de contenu creux, pas de remplissage.
+    </p>
+  </section>
+
+  <section class="stats wrap" data-reveal>
+    {stats.map((s) => (
+      <div class="stat"><span class="stat__n">{s.n}</span><span class="stat__l">{s.l}</span></div>
+    ))}
+  </section>
+
+  <section class="wrap-read about-text">
+    <div data-reveal>
+      <h2>Ce qui nous guide</h2>
+      <p>
+        Chaque article part d'une question réelle que vous vous posez. On y répond en profondeur&nbsp;: le contexte,
+        les chiffres, les comparatifs, les pièges à éviter et une conclusion actionnable. On structure l'information
+        pour qu'elle soit lisible en trente secondes comme en dix minutes.
+      </p>
+    </div>
+    <div data-reveal>
+      <h2>Notre méthode</h2>
+      <p>
+        UWOS combine une rédaction exigeante et les meilleurs outils éditoriaux pour couvrir un large spectre de
+        sujets sans jamais sacrifier la qualité. Chaque contenu est pensé pour répondre pleinement à l'intention de
+        recherche&nbsp;: encadrés, tableaux comparatifs, FAQ et points-clés viennent éclairer l'essentiel.
+      </p>
+    </div>
+    <div data-reveal>
+      <h2>Indépendance</h2>
+      <p>
+        Nous sommes un média indépendant. Notre ligne éditoriale n'appartient qu'à nos lecteurs. La confiance se
+        gagne article après article — c'est le seul indicateur qui nous intéresse.
+      </p>
+    </div>
+    <div class="about-cta" data-reveal>
+      <a href="/le-fil/" class="btn">Découvrir le fil →</a>
+      <a href="/rubriques/" class="btn btn--ghost">Explorer les rubriques</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about-hero { padding-top: clamp(3.5rem, 9vw, 7rem); }
+  .about-hero h1 { font-size: var(--step-5); margin-top: 1rem; max-width: 18ch; }
+  .about-hero h1 em { color: var(--orange); font-style: normal; }
+  .about-hero__lead { font-size: var(--step-1); color: var(--smoke); max-width: 62ch; margin-top: 1.6rem; line-height: 1.6; font-weight: 300; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border-block: 1px solid var(--line); margin-top: clamp(3rem, 6vw, 5rem); }
+  .stat { background: var(--void); padding: clamp(1.5rem, 3vw, 2.4rem) 1rem; text-align: center; }
+  .stat__n { display: block; font-family: var(--font-display); font-weight: 800; font-size: var(--step-4); color: var(--orange); line-height: 1; }
+  .stat__l { display: block; margin-top: 0.5rem; font-family: var(--font-mono); font-size: var(--step--2); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  @media (max-width: 640px) { .stats { grid-template-columns: 1fr 1fr; } }
+
+  .about-text { padding-top: clamp(3rem, 6vw, 5rem); display: grid; gap: 2.5rem; }
+  .about-text h2 { font-size: var(--step-3); margin-bottom: 0.8rem; }
+  .about-text p { color: var(--smoke); font-size: var(--step-0); line-height: 1.75; }
+  .about-cta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+</style>

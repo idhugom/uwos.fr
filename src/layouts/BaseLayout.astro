@@ -1,0 +1,209 @@
+---
+import '@fontsource-variable/bricolage-grotesque/wght.css';
+import '@fontsource-variable/inter/wght.css';
+import '../styles/global.css';
+import '../styles/prose.css';
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../lib/site.js';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string | null;
+  type?: 'website' | 'article';
+  canonical?: string;
+  noindex?: boolean;
+  jsonld?: object | object[] | null;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description = SITE.description,
+  image = '/og-default.jpg',
+  type = 'website',
+  canonical,
+  noindex = false,
+  jsonld = null,
+  bodyClass = '',
+} = Astro.props;
+
+const pageTitle = title ? `${title} · ${SITE.name}` : SITE.title;
+const canonicalURL = new URL(canonical ?? Astro.url.pathname, SITE.url).href;
+const ogImage = image ? new URL(image, SITE.url).href : new URL('/og-default.jpg', SITE.url).href;
+
+const baseJsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    url: SITE.url,
+    description: SITE.description,
+    inLanguage: 'fr-FR',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${SITE.url}/recherche/?q={query}` },
+      'query-input': 'required name=query',
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE.name,
+    url: SITE.url,
+    logo: `${SITE.url}/logo-orange.png`,
+    slogan: SITE.tagline,
+  },
+];
+const allJsonLd = jsonld ? [...baseJsonLd, ...(Array.isArray(jsonld) ? jsonld : [jsonld])] : baseJsonLd;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/logo-orange.png" />
+    <meta name="theme-color" content="#060504" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content={title ?? SITE.title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1536" />
+    <meta property="og:image:height" content="1024" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title ?? SITE.title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="alternate" type="application/rss+xml" title={`${SITE.name} — Le fil`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(allJsonLd)} is:inline />
+
+    <ClientRouter />
+  </head>
+  <body class={bodyClass}>
+    <a href="#main" class="skip-link">Aller au contenu</a>
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // ------- Interactions globales (ré-init à chaque navigation View Transitions) -------
+      function initReveal() {
+        const els = document.querySelectorAll('[data-reveal]:not(.is-in)');
+        if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          els.forEach((e) => e.classList.add('is-in'));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-in');
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.05 }
+        );
+        els.forEach((e) => io.observe(e));
+      }
+
+      function initHeader() {
+        const header = document.querySelector('[data-header]');
+        if (!header) return;
+        const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > 40);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+      }
+
+      function initCursor() {
+        if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+        const dot = document.querySelector('.cursor-dot');
+        const ring = document.querySelector('.cursor-ring');
+        if (!dot || !ring) return;
+        document.body.classList.add('has-cursor');
+        let rx = 0, ry = 0, dx = 0, dy = 0;
+        addEventListener('mousemove', (e) => {
+          dx = e.clientX; dy = e.clientY;
+          dot.style.transform = `translate(${dx}px, ${dy}px) translate(-50%,-50%)`;
+        });
+        const loop = () => {
+          rx += (dx - rx) * 0.18; ry += (dy - ry) * 0.18;
+          ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%,-50%)`;
+          requestAnimationFrame(loop);
+        };
+        loop();
+        const hover = (on) => () => ring.classList.toggle('is-hover', on);
+        document.addEventListener('mouseover', (e) => {
+          if (e.target.closest('a, button, [data-cursor]')) ring.classList.add('is-hover');
+        });
+        document.addEventListener('mouseout', (e) => {
+          if (e.target.closest('a, button, [data-cursor]')) ring.classList.remove('is-hover');
+        });
+      }
+
+      function initProgress() {
+        const bar = document.querySelector('[data-progress]');
+        if (!bar) return;
+        const article = document.querySelector('[data-article-body]') || document.body;
+        const onScroll = () => {
+          const top = article.offsetTop;
+          const h = article.offsetHeight - window.innerHeight;
+          const p = Math.min(1, Math.max(0, (window.scrollY - top) / Math.max(1, h)));
+          bar.style.transform = `scaleX(${p})`;
+        };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+      }
+
+      function init() {
+        initReveal();
+        initHeader();
+        initCursor();
+        initProgress();
+      }
+      document.addEventListener('astro:page-load', init);
+    </script>
+
+    <style is:global>
+      .skip-link {
+        position: fixed;
+        top: -100px;
+        left: 1rem;
+        z-index: 10000;
+        background: var(--orange);
+        color: #000;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: top 0.2s;
+      }
+      .skip-link:focus { top: 1rem; }
+    </style>
+  </body>
+</html>

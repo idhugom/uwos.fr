@@ -1,0 +1,151 @@
+---
+import { categoryOf } from '../lib/taxonomy.js';
+import { formatDate, imgSrcset, pad } from '../lib/format.js';
+import { SITE } from '../lib/site.js';
+
+interface Props { entry: any; count: number; }
+const { entry, count } = Astro.props;
+const d = entry.data;
+const cat = categoryOf(d.category);
+const href = `/${entry.id}/`;
+const img = imgSrcset(d.image);
+const words = SITE.tagline.split(' ');
+---
+
+<section class="hero" aria-label="À la une">
+  <div class="hero__bg" aria-hidden="true">
+    {img && (
+      <img src={img.src} srcset={img.srcset} sizes="100vw" alt="" width="1200" height="800" fetchpriority="high" class="hero__img" />
+    )}
+    <div class="hero__mesh"></div>
+    <div class="hero__scrim"></div>
+  </div>
+
+  <div class="hero__top wrap">
+    <span class="kicker">UWOS — Édition du {formatDate(d.date)}</span>
+    <span class="hero__count">N°{pad(count)}</span>
+  </div>
+
+  <div class="hero__inner wrap">
+    <h1 class="hero__statement">
+      {words.map((w, i) => (
+        <span class="hero__word" style={`--i:${i}`}><span>{w}</span></span>
+      ))}
+    </h1>
+
+    <a href={href} class="hero__feature" data-cursor>
+      <span class="hero__feature-cat">{cat.label} · À la une</span>
+      <h2 class="hero__feature-title">{d.title}</h2>
+      {d.excerpt && <p class="hero__feature-excerpt">{d.excerpt}</p>}
+      <span class="hero__feature-cta">
+        <span class="btn">Lire l'article <span aria-hidden="true">→</span></span>
+        <span class="hero__meta">{formatDate(d.date)}</span>
+      </span>
+    </a>
+  </div>
+
+  <a href="#a-la-une" class="hero__scroll" aria-label="Défiler">
+    <span></span>
+    <em>Explorer</em>
+  </a>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: clamp(600px, 92vh, 1000px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-block: clamp(1.5rem, 4vh, 3rem) clamp(2.5rem, 6vh, 5rem);
+    overflow: clip;
+    isolation: isolate;
+  }
+  .hero__bg { position: absolute; inset: 0; z-index: -2; }
+  .hero__img {
+    width: 100%; height: 100%; object-fit: cover;
+    animation: kenburns 24s var(--ease-in-out) infinite alternate;
+    filter: saturate(0.7) brightness(0.5) contrast(1.05);
+  }
+  @keyframes kenburns { from { transform: scale(1.04) translateY(0); } to { transform: scale(1.16) translateY(-2%); } }
+  .hero__mesh {
+    position: absolute; inset: -20%;
+    background:
+      radial-gradient(40% 40% at 15% 25%, color-mix(in oklab, var(--orange) 55%, transparent), transparent 70%),
+      radial-gradient(35% 45% at 85% 75%, color-mix(in oklab, var(--orange-deep) 45%, transparent), transparent 70%);
+    mix-blend-mode: hard-light;
+    filter: blur(40px);
+    opacity: 0.6;
+    animation: drift 18s var(--ease-in-out) infinite alternate;
+  }
+  @keyframes drift { to { transform: translate3d(3%, -4%, 0) rotate(6deg); } }
+  .hero__scrim {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--void) 55%, transparent) 0%, transparent 35%, color-mix(in oklab, var(--void) 88%, transparent) 100%),
+      linear-gradient(90deg, color-mix(in oklab, var(--void) 60%, transparent), transparent 60%);
+  }
+
+  .hero__top {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
+  }
+  .hero__count { font-family: var(--font-mono); color: var(--muted); font-size: var(--step--1); letter-spacing: 0.1em; }
+
+  .hero__inner { width: 100%; display: flex; flex-direction: column; gap: clamp(1.5rem, 4vw, 3rem); }
+  .hero__statement {
+    font-size: var(--step-7);
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+    max-width: 14ch;
+  }
+  .hero__word { display: inline-block; overflow: hidden; padding-block: 0.02em; margin-right: 0.28em; }
+  .hero__word:last-child { margin-right: 0; }
+  .hero__word > span {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: rise 0.9s var(--ease-out) forwards;
+    animation-delay: calc(var(--i) * 0.12s + 0.15s);
+  }
+  .hero__word:last-child > span { color: var(--orange); }
+  @keyframes rise { to { transform: translateY(0); } }
+
+  .hero__feature {
+    display: block;
+    max-width: 640px;
+    border-left: 2px solid var(--orange);
+    padding-left: clamp(1rem, 2vw, 1.6rem);
+  }
+  .hero__feature-cat {
+    font-family: var(--font-mono); font-size: var(--step--2);
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ember);
+  }
+  .hero__feature-title {
+    font-size: var(--step-3); line-height: 1.04; margin-top: 0.5rem;
+    transition: color 0.3s;
+  }
+  .hero__feature:hover .hero__feature-title { color: var(--orange); }
+  .hero__feature-excerpt { color: var(--smoke); margin-top: 0.7rem; max-width: 54ch; font-size: var(--step-0); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .hero__feature-cta { display: flex; align-items: center; gap: 1.2rem; margin-top: 1.3rem; flex-wrap: wrap; }
+  .hero__meta { font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); }
+
+  .hero__scroll {
+    align-self: center;
+    display: inline-flex; flex-direction: column; align-items: center; gap: 0.6rem;
+    color: var(--muted); font-family: var(--font-mono); font-size: var(--step--2);
+    letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .hero__scroll span {
+    width: 1px; height: 42px;
+    background: linear-gradient(var(--orange), transparent);
+    animation: scrollcue 2s var(--ease-in-out) infinite;
+    transform-origin: top;
+  }
+  @keyframes scrollcue { 0%,100% { transform: scaleY(0.3); opacity: 0.4; } 50% { transform: scaleY(1); opacity: 1; } }
+
+  @media (max-width: 700px) {
+    .hero__statement { font-size: clamp(3rem, 18vw, 5rem); }
+    .hero__feature-title { font-size: var(--step-2); }
+  }
+</style>

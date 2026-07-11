@@ -1,0 +1,185 @@
+---
+import { SITE } from '../lib/site.js';
+const cats = SITE.categories;
+---
+
+<header class="header" data-header>
+  <div class="header__inner wrap">
+    <a href="/" class="brand" aria-label={`${SITE.name} — accueil`}>
+      <img src="/logo-white.png" alt={SITE.name} width="354" height="90" class="brand__logo" />
+      <span class="brand__pulse" aria-hidden="true"></span>
+    </a>
+
+    <nav class="nav" aria-label="Navigation principale">
+      {SITE.nav.map((item) => (
+        <a href={item.href} class="nav__link link-underline">{item.label}</a>
+      ))}
+    </nav>
+
+    <div class="header__actions">
+      <a href="/recherche/" class="search-btn" aria-label="Rechercher" data-cursor>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+        </svg>
+        <span>Rechercher</span>
+      </a>
+      <input type="checkbox" id="menu-toggle" class="menu-toggle" aria-label="Ouvrir le menu" />
+      <label for="menu-toggle" class="burger" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Overlay plein écran (mobile / tablette) -->
+  <div class="overlay">
+    <div class="overlay__inner wrap">
+      <nav class="overlay__nav" aria-label="Menu">
+        <a href="/" class="overlay__link">Accueil</a>
+        {SITE.nav.map((item) => (
+          <a href={item.href} class="overlay__link">{item.label}</a>
+        ))}
+        <a href="/recherche/" class="overlay__link">Rechercher</a>
+      </nav>
+      <div class="overlay__cats">
+        <span class="kicker">Rubriques</span>
+        <ul>
+          {cats.map((c) => (
+            <li><a href={`/rubrique/${c.slug}/`}>{c.label}</a></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: background 0.4s var(--ease), border-color 0.4s;
+    border-bottom: 1px solid transparent;
+  }
+  .header.is-scrolled {
+    background: color-mix(in oklab, var(--void) 78%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom-color: var(--line);
+  }
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    height: clamp(64px, 8vh, 84px);
+  }
+  .brand { position: relative; display: inline-flex; align-items: center; }
+  .brand__logo {
+    height: clamp(20px, 2.4vw, 26px);
+    width: auto;
+    transition: opacity 0.3s;
+  }
+  .brand:hover .brand__logo { opacity: 0.85; }
+  .brand__pulse {
+    position: absolute;
+    top: -3px; right: -12px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--orange) 70%, transparent);
+    animation: pulse 2.4s var(--ease) infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--orange) 60%, transparent); }
+    70% { box-shadow: 0 0 0 10px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  .nav { display: flex; gap: clamp(1.2rem, 2.5vw, 2.5rem); }
+  .nav__link { font-weight: 500; font-size: var(--step--1); }
+
+  .header__actions { display: flex; align-items: center; gap: 1rem; }
+  .search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.5em 1em;
+    border: 1px solid var(--line-strong);
+    border-radius: 100px;
+    font-size: var(--step--1);
+    color: var(--muted);
+    transition: color 0.3s, border-color 0.3s, background 0.3s;
+  }
+  .search-btn:hover { color: var(--paper); border-color: var(--orange); }
+  .search-btn svg { color: var(--orange); }
+
+  /* ---- Menu mobile ---- */
+  .menu-toggle, .burger { display: none; }
+  .overlay { display: none; }
+
+  @media (max-width: 860px) {
+    .nav { display: none; }
+    .search-btn span { display: none; }
+    .search-btn { padding: 0.55em; }
+    .burger {
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 42px; height: 42px;
+      padding: 10px;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      z-index: 120;
+      position: relative;
+    }
+    .burger span {
+      display: block; height: 2px; width: 100%;
+      background: var(--paper);
+      transition: transform 0.4s var(--ease), opacity 0.3s;
+      transform-origin: center;
+    }
+    .overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      background: var(--ink);
+      clip-path: circle(0% at calc(100% - 42px) 42px);
+      transition: clip-path 0.6s var(--ease-in-out);
+      pointer-events: none;
+    }
+    .menu-toggle:checked ~ .overlay {
+      clip-path: circle(150% at calc(100% - 42px) 42px);
+      pointer-events: auto;
+    }
+    .menu-toggle:checked ~ label.burger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .menu-toggle:checked ~ label.burger span:nth-child(2) { opacity: 0; }
+    .menu-toggle:checked ~ label.burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .overlay__inner {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2.5rem;
+      padding-top: 5rem;
+    }
+    .overlay__nav { display: flex; flex-direction: column; gap: 0.25rem; }
+    .overlay__link {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.2rem, 11vw, 3.5rem);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    .overlay__link:hover { color: var(--orange); }
+    .overlay__cats ul {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1.5rem;
+      margin-top: 1rem;
+    }
+    .overlay__cats a { color: var(--muted); font-size: var(--step-0); }
+    .overlay__cats a:hover { color: var(--paper); }
+  }
+</style>

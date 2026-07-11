@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Recherche" description="Cherchez parmi tous les articles d'UWOS." noindex={true}>
+  <section class="wrap search">
+    <header class="search__head">
+      <span class="kicker">Recherche</span>
+      <h1>Que cherchez-vous&nbsp;?</h1>
+    </header>
+
+    <form class="search__form" role="search" onsubmit="return false">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+      </svg>
+      <input id="q" type="search" placeholder="maison, budget, cuisine, IKEA, méditation…" autocomplete="off" autofocus aria-label="Rechercher" />
+      <button type="button" id="clear" class="search__clear" aria-label="Effacer" hidden>✕</button>
+    </form>
+
+    <p class="search__status" id="status" aria-live="polite"></p>
+    <ul class="search__results" id="results"></ul>
+  </section>
+
+  <script>
+    const CATS = null;
+    let DATA = [];
+    const input = document.getElementById('q');
+    const results = document.getElementById('results');
+    const status = document.getElementById('status');
+    const clearBtn = document.getElementById('clear');
+
+    const deburr = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    async function load() {
+      if (DATA.length) return;
+      try {
+        const res = await fetch('/search-index.json');
+        DATA = await res.json();
+      } catch { status.textContent = 'Impossible de charger l’index de recherche.'; }
+    }
+
+    function render(q) {
+      const query = deburr(q.trim());
+      clearBtn.hidden = !q;
+      if (!query) { results.innerHTML = ''; status.textContent = ''; return; }
+      const terms = query.split(/\s+/).filter(Boolean);
+      const scored = [];
+      for (const it of DATA) {
+        const hayT = deburr(it.t);
+        const hayX = deburr(it.x + ' ' + it.c);
+        let score = 0;
+        for (const t of terms) {
+          if (hayT.includes(t)) score += 10;
+          else if (hayX.includes(t)) score += 3;
+          else { score = 0; break; }
+        }
+        if (score > 0) {
+          if (hayT.startsWith(terms[0])) score += 5;
+          scored.push({ it, score });
+        }
+      }
+      scored.sort((a, b) => b.score - a.score);
+      const top = scored.slice(0, 40);
+      status.textContent = `${scored.length} résultat${scored.length > 1 ? 's' : ''} pour « ${q.trim()} »`;
+      results.innerHTML = top
+        .map(({ it }) => {
+          const img = it.i
+            ? `<img src="${it.i}-600.webp" alt="" width="600" height="400" loading="lazy">`
+            : `<div class="sr__ph"></div>`;
+          return `<li class="sr"><a href="/${it.s}/">
+            <div class="sr__media">${img}</div>
+            <div class="sr__body"><span class="sr__cat">${it.c}</span>
+            <span class="sr__title">${it.t}</span>
+            <span class="sr__date">${it.d}</span></div></a></li>`;
+        })
+        .join('');
+    }
+
+    function initSearch() {
+      const url = new URL(location.href);
+      const q0 = url.searchParams.get('q') || '';
+      if (q0) input.value = q0;
+      load().then(() => render(input.value));
+      input.addEventListener('input', () => {
+        load().then(() => render(input.value));
+      });
+      clearBtn.addEventListener('click', () => { input.value = ''; input.focus(); render(''); });
+    }
+    document.addEventListener('astro:page-load', initSearch);
+  </script>
+</BaseLayout>
+
+<style>
+  .search { padding-top: clamp(3rem, 8vw, 6rem); min-height: 70vh; }
+  .search__head h1 { font-size: var(--step-5); margin-top: 0.4rem; }
+  .search__form {
+    display: flex; align-items: center; gap: 1rem;
+    margin-top: 2rem; padding: 0.4rem 1.2rem;
+    border: 1px solid var(--line-strong); border-radius: 100px;
+    background: var(--ink); transition: border-color 0.3s;
+  }
+  .search__form:focus-within { border-color: var(--orange); }
+  .search__form svg { color: var(--orange); flex-shrink: 0; }
+  .search__form input { flex: 1; background: none; border: none; padding: 0.9rem 0; font-size: var(--step-1); }
+  .search__form input:focus { outline: none; }
+  .search__clear { color: var(--muted); font-size: 1.2rem; }
+  .search__status { margin-top: 1.4rem; font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); letter-spacing: 0.05em; }
+  .search__results { margin-top: 1.5rem; display: grid; gap: 0.5rem; }
+  .sr a { display: grid; grid-template-columns: 84px 1fr; gap: 1.2rem; align-items: center; padding: 0.7rem; border-radius: var(--r); transition: background 0.3s; }
+  .sr a:hover { background: var(--ink-2); }
+  .sr__media { width: 84px; height: 60px; border-radius: var(--r-sm); overflow: hidden; background: var(--surface); }
+  .sr__media img { width: 100%; height: 100%; object-fit: cover; }
+  .sr__ph { width: 100%; height: 100%; background: linear-gradient(140deg, var(--surface-2), var(--ink)); }
+  .sr__body { display: flex; flex-direction: column; gap: 0.2rem; }
+  .sr__cat { font-family: var(--font-mono); font-size: var(--step--2); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ember); }
+  .sr__title { font-family: var(--font-display); font-weight: 700; font-size: var(--step-0); line-height: 1.15; }
+  .sr a:hover .sr__title { color: var(--orange); }
+  .sr__date { font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); }
+</style>

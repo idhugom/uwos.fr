@@ -1,0 +1,207 @@
+/* =========================================================================
+   UWOS — Typographie éditoriale des articles (contenu Markdown rendu)
+   Styles globaux car le HTML issu de <Content /> n'est pas "scopé".
+   ========================================================================= */
+
+.prose {
+  font-size: clamp(1.02rem, 0.99rem + 0.2vw, 1.16rem);
+  line-height: 1.78;
+  color: color-mix(in oklab, var(--paper) 88%, var(--void));
+  --flow: 1.55em;
+}
+.prose > * + * { margin-top: var(--flow); }
+
+.prose p { text-wrap: pretty; }
+
+/* Lettrine sur le chapô */
+.prose > p:first-of-type::first-letter {
+  font-family: var(--font-display);
+  font-weight: 800;
+  float: left;
+  font-size: 3.6em;
+  line-height: 0.76;
+  padding: 0.06em 0.12em 0 0;
+  color: var(--orange);
+}
+
+/* Titres */
+.prose h2, .prose h3, .prose h4 {
+  color: var(--white);
+  scroll-margin-top: 100px;
+  line-height: 1.12;
+}
+.prose h2 {
+  font-size: var(--step-3);
+  margin-top: 2.4em;
+  padding-top: 0.4em;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+.prose h2::before {
+  content: '';
+  display: block;
+  width: 44px; height: 3px;
+  background: var(--orange);
+  margin-bottom: 0.55em;
+  border-radius: 2px;
+}
+.prose h3 { font-size: var(--step-2); margin-top: 1.8em; }
+.prose h4 { font-size: var(--step-1); margin-top: 1.5em; color: var(--paper); }
+
+/* Liens */
+.prose a {
+  color: var(--orange);
+  background-image: linear-gradient(var(--orange), var(--orange));
+  background-size: 100% 1px;
+  background-position: 0 1.15em;
+  background-repeat: no-repeat;
+  transition: background-size 0.3s, color 0.3s;
+}
+.prose a:hover { color: var(--ember); background-size: 100% 2px; }
+
+.prose strong { color: var(--white); font-weight: 650; }
+.prose em { color: var(--paper); }
+
+/* Listes */
+.prose ul, .prose ol { padding-left: 0; display: grid; gap: 0.55em; }
+.prose li { position: relative; padding-left: 1.7em; }
+.prose ul > li::before {
+  content: '';
+  position: absolute; left: 0.1em; top: 0.62em;
+  width: 8px; height: 8px;
+  background: var(--orange);
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+.prose ol { counter-reset: li; }
+.prose ol > li::before {
+  counter-increment: li;
+  content: counter(li, decimal-leading-zero);
+  position: absolute; left: 0; top: 0.05em;
+  font-family: var(--font-mono); font-size: 0.8em;
+  color: var(--orange); font-weight: 600;
+}
+.prose li > ul, .prose li > ol { margin-top: 0.55em; }
+
+/* Citations */
+.prose blockquote {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--step-2);
+  line-height: 1.28;
+  color: var(--white);
+  padding-left: 1.2em;
+  border-left: 3px solid var(--orange);
+  letter-spacing: -0.01em;
+}
+.prose blockquote p { margin: 0; }
+.prose blockquote cite { display: block; margin-top: 0.6em; font-family: var(--font-mono); font-size: 0.5em; font-style: normal; color: var(--muted); letter-spacing: 0.08em; }
+
+/* Encarts / callouts (directives :::) */
+.callout {
+  --c: var(--orange);
+  position: relative;
+  background: color-mix(in oklab, var(--c) 8%, var(--ink));
+  border: 1px solid color-mix(in oklab, var(--c) 26%, transparent);
+  border-radius: var(--r);
+  padding: clamp(1.1rem, 2.5vw, 1.6rem) clamp(1.2rem, 3vw, 1.8rem);
+  padding-left: clamp(1.4rem, 3vw, 2rem);
+}
+.callout::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c); border-radius: var(--r) 0 0 var(--r); }
+.callout > * + * { margin-top: 0.6em; }
+.callout p { margin: 0; }
+.callout .callout__label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: var(--step--2);
+  color: var(--c);
+  font-weight: 600;
+  display: flex; align-items: center; gap: 0.5em;
+}
+.callout .callout__label::before { font-size: 1.1em; }
+.callout--info { --c: #2f9bff; }
+.callout--info .callout__label::before { content: 'ℹ'; }
+.callout--note { --c: var(--amber); }
+.callout--note .callout__label::before { content: '✎'; }
+.callout--tip { --c: #24d17e; }
+.callout--tip .callout__label::before { content: '✦'; }
+.callout--warning, .callout--important { --c: #ff5a00; }
+.callout--warning .callout__label::before { content: '⚠'; }
+.callout--important .callout__label::before { content: '❗'; }
+.callout--key { --c: var(--orange); background: color-mix(in oklab, var(--orange) 12%, var(--ink)); }
+.callout--key .callout__label::before { content: '★'; }
+.callout--stat { --c: var(--ember); }
+.callout--stat .callout__label::before { content: '📊'; }
+
+/* Tableaux (dont comparatifs 2 colonnes) */
+.prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.prose thead { background: color-mix(in oklab, var(--orange) 16%, var(--ink)); }
+.prose th {
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--white);
+  padding: 0.85em 1.1em;
+  white-space: nowrap;
+  border-bottom: 1px solid color-mix(in oklab, var(--orange) 40%, transparent);
+}
+.prose td { padding: 0.8em 1.1em; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--smoke); }
+.prose tbody tr:nth-child(even) { background: color-mix(in oklab, var(--paper) 3%, transparent); }
+.prose tbody tr:last-child td { border-bottom: none; }
+.prose tbody tr:hover { background: color-mix(in oklab, var(--orange) 8%, transparent); }
+
+/* Images & figures */
+.prose img { width: 100%; border-radius: var(--r); border: 1px solid var(--line); }
+.prose figure { margin: 0; }
+.prose figcaption { margin-top: 0.7em; font-size: var(--step--2); color: var(--faint); font-family: var(--font-mono); text-align: center; }
+
+/* Code */
+.prose :not(pre) > code {
+  font-family: var(--font-mono); font-size: 0.86em;
+  background: var(--surface); padding: 0.15em 0.45em; border-radius: 5px;
+  border: 1px solid var(--line); color: var(--ember);
+}
+.prose pre {
+  background: var(--ink-2); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 1.2rem 1.4rem; overflow-x: auto;
+  font-size: 0.86em;
+}
+.prose hr { margin-block: 2.5em; border-top: 1px solid var(--line); }
+
+/* FAQ (accordéon) */
+.faq { margin-top: 3.5rem; }
+.faq > h2 { font-size: var(--step-3); margin-bottom: 1.3rem; }
+.faq > h2::before { content: ''; display: block; width: 44px; height: 3px; background: var(--orange); margin-bottom: 0.5em; border-radius: 2px; }
+.faq__item { border-bottom: 1px solid var(--line); }
+.faq__item summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1.2rem 0; cursor: pointer; list-style: none;
+  font-family: var(--font-display); font-weight: 700; font-size: var(--step-1);
+  color: var(--paper); transition: color 0.3s;
+}
+.faq__item summary::-webkit-details-marker { display: none; }
+.faq__item summary::after {
+  content: '+'; flex-shrink: 0;
+  width: 34px; height: 34px; border: 1px solid var(--line-strong); border-radius: 50%;
+  display: grid; place-items: center; color: var(--orange); font-size: 1.3rem;
+  transition: transform 0.4s var(--ease), background 0.3s, color 0.3s;
+}
+.faq__item[open] summary { color: var(--orange); }
+.faq__item[open] summary::after { transform: rotate(135deg); background: var(--orange); color: #000; }
+.faq__item summary:hover { color: var(--orange); }
+.faq__answer { padding-bottom: 1.3rem; color: var(--smoke); line-height: 1.7; }
+.faq__answer p { margin: 0; }
+
+@media (max-width: 640px) {
+  .prose > p:first-of-type::first-letter { font-size: 3em; }
+  .faq__item summary { font-size: var(--step-0); }
+}

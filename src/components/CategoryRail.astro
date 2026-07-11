@@ -1,0 +1,42 @@
+---
+import ArticleCard from './ArticleCard.astro';
+import { categoryOf } from '../lib/taxonomy.js';
+
+interface Props { category: string; entries: any[]; }
+const { category, entries } = Astro.props;
+const cat = categoryOf(category);
+---
+
+<section class="rail section" data-reveal>
+  <div class="rail__head wrap">
+    <div>
+      <span class="kicker">{cat.tagline}</span>
+      <h2 class="rail__title"><a href={`/rubrique/${cat.slug}/`}>{cat.label}</a></h2>
+    </div>
+    <a href={`/rubrique/${cat.slug}/`} class="rail__all link-underline">Tout voir <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="rail__scroller" data-cursor>
+    <div class="rail__track wrap">
+      {entries.map((entry, i) => (
+        <div class="rail__item"><ArticleCard entry={entry} index={i + 1} /></div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .rail { padding-block: clamp(2.5rem, 5vw, 4rem); }
+  .rail__head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.8rem;
+  }
+  .rail__title { font-size: var(--step-4); margin-top: 0.5rem; }
+  .rail__title a { transition: color 0.3s; }
+  .rail__title a:hover { color: var(--orange); }
+  .rail__all { font-family: var(--font-mono); font-size: var(--step--1); white-space: nowrap; color: var(--muted); }
+
+  .rail__scroller { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .rail__scroller::-webkit-scrollbar { display: none; }
+  .rail__track { display: flex; gap: var(--gap); padding-bottom: 0.5rem; }
+  .rail__item { flex: 0 0 clamp(260px, 30vw, 380px); scroll-snap-align: start; }
+</style>

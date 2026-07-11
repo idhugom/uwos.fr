@@ -1,0 +1,284 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { categoryOf } from '../lib/taxonomy.js';
+import { formatDate, isoDate, readingTime, imgSrcset } from '../lib/format.js';
+import { SITE } from '../lib/site.js';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles');
+  return articles.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const d = entry.data;
+const cat = categoryOf(d.category);
+const rt = d.readingTime ?? readingTime(entry.body || d.excerpt);
+const img = imgSrcset(d.image);
+const isPending = d.status !== 'published';
+
+const all = await getCollection('articles');
+const related = all
+  .filter((e) => e.data.category === d.category && e.id !== entry.id)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+const readNext = related.length
+  ? related
+  : all.filter((e) => e.id !== entry.id).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()).slice(0, 3);
+
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+
+const pageURL = `${SITE.url}/${entry.id}/`;
+const ogImg = d.image ? `${d.image}-1200.webp` : '/og-default.jpg';
+
+const jsonld = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: d.title,
+    description: d.description || d.excerpt,
+    image: [new URL(ogImg, SITE.url).href],
+    datePublished: isoDate(d.date),
+    dateModified: isoDate(d.updated || d.date),
+    author: { '@type': 'Organization', name: d.author || SITE.author },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE.name,
+      logo: { '@type': 'ImageObject', url: `${SITE.url}/logo-orange.png` },
+    },
+    mainEntityOfPage: pageURL,
+    articleSection: cat.label,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE.url },
+      { '@type': 'ListItem', position: 2, name: cat.label, item: `${SITE.url}/rubrique/${cat.slug}/` },
+      { '@type': 'ListItem', position: 3, name: d.title, item: pageURL },
+    ],
+  },
+  ...(d.faq && d.faq.length
+    ? [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: d.faq.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        },
+      ]
+    : []),
+];
+---
+
+<BaseLayout
+  title={d.title}
+  description={d.description || d.excerpt}
+  image={ogImg}
+  type="article"
+  jsonld={jsonld}
+  bodyClass="is-article"
+>
+  <div class="progress" data-progress aria-hidden="true"></div>
+
+  <article>
+    <!-- ===== Hero article ===== -->
+    <header class="ah">
+      <div class="ah__media" aria-hidden="true">
+        {img && <img src={img.src} srcset={img.srcset} sizes="100vw" alt="" width="1200" height="800" fetchpriority="high" />}
+        <div class="ah__scrim"></div>
+      </div>
+      <div class="ah__inner wrap-read">
+        <nav class="crumbs" aria-label="Fil d'ariane">
+          <a href="/">Accueil</a><span>/</span>
+          <a href={`/rubrique/${cat.slug}/`}>{cat.label}</a>
+        </nav>
+        <h1 class="ah__title">{d.title}</h1>
+        {d.excerpt && <p class="ah__lead">{d.excerpt}</p>}
+        <div class="ah__meta">
+          <span class="ah__author">{d.author}</span>
+          <span>·</span>
+          <time datetime={isoDate(d.date)}>{formatDate(d.date)}</time>
+          <span>·</span>
+          <span>{rt} min de lecture</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== Corps ===== -->
+    <div class="ah__layout wrap">
+      <aside class="toc" aria-label="Sommaire">
+        {toc.length > 0 && (
+          <div class="toc__inner">
+            <span class="tag">Sommaire</span>
+            <ol>
+              {toc.map((h) => (
+                <li class:list={[`toc__lvl-${h.depth}`]}><a href={`#${h.slug}`}>{h.text}</a></li>
+              ))}
+            </ol>
+            <div class="toc__share">
+              <span class="tag">Partager</span>
+              <div class="share">
+                <a class="share__btn" href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(pageURL)}&text=${encodeURIComponent(d.title)}`} target="_blank" rel="noopener" aria-label="Partager sur X">X</a>
+                <a class="share__btn" href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageURL)}`} target="_blank" rel="noopener" aria-label="Partager sur LinkedIn">in</a>
+                <a class="share__btn" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageURL)}`} target="_blank" rel="noopener" aria-label="Partager sur Facebook">f</a>
+                <button class="share__btn" data-copy={pageURL} aria-label="Copier le lien">⧉</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      <div class="prose wrap-read" data-article-body>
+        {d.keyTakeaways && d.keyTakeaways.length > 0 && (
+          <aside class="takeaways">
+            <span class="takeaways__label">L'essentiel</span>
+            <ul>{d.keyTakeaways.map((k) => <li>{k}</li>)}</ul>
+          </aside>
+        )}
+
+        {isPending ? (
+          <div class="pending">
+            <span class="kicker">Réécriture en cours</span>
+            <p>Cet article est en cours de réécriture par la rédaction UWOS pour vous offrir un contenu complet, vérifié et réellement utile. Revenez très vite.</p>
+            {d.excerpt && <p class="pending__teaser">{d.excerpt}</p>}
+          </div>
+        ) : (
+          <Content />
+        )}
+
+        {d.faq && d.faq.length > 0 && (
+          <section class="faq" id="faq">
+            <h2>Questions fréquentes</h2>
+            {d.faq.map((f) => (
+              <details class="faq__item">
+                <summary>{f.q}</summary>
+                <div class="faq__answer"><p>{f.a}</p></div>
+              </details>
+            ))}
+          </section>
+        )}
+
+        <div class="article-foot">
+          <a href={`/rubrique/${cat.slug}/`} class="pill">{cat.label}</a>
+          {d.tags.map((t) => <span class="pill pill--tag">#{t}</span>)}
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ===== À lire ensuite ===== -->
+  <section class="section wrap">
+    <header class="sec-head sec-head--split" data-reveal>
+      <div><span class="kicker">Poursuivre</span><h2>À lire ensuite</h2></div>
+      <a href={`/rubrique/${cat.slug}/`} class="btn btn--ghost">Toute la rubrique →</a>
+    </header>
+    <div class="related-grid">
+      {readNext.map((e, i) => <ArticleCard entry={e} index={i + 1} />)}
+    </div>
+  </section>
+
+  <script>
+    function initShare() {
+      document.querySelectorAll('[data-copy]').forEach((btn) => {
+        if (btn.dataset.ready) return;
+        btn.dataset.ready = '1';
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(btn.getAttribute('data-copy'));
+            const old = btn.textContent;
+            btn.textContent = '✓';
+            setTimeout(() => (btn.textContent = old), 1400);
+          } catch {}
+        });
+      });
+    }
+    document.addEventListener('astro:page-load', initShare);
+  </script>
+</BaseLayout>
+
+<style>
+  .progress {
+    position: fixed; top: 0; left: 0;
+    height: 3px; width: 100%;
+    background: linear-gradient(90deg, var(--orange), var(--ember));
+    transform: scaleX(0); transform-origin: 0 50%;
+    z-index: 200;
+  }
+
+  /* ===== Hero article ===== */
+  .ah { position: relative; padding-top: clamp(2rem, 6vw, 4.5rem); }
+  .ah__media { position: absolute; inset: 0; z-index: -1; overflow: clip; height: min(78vh, 760px); }
+  .ah__media img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.44) saturate(0.85); }
+  .ah__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in oklab, var(--void) 40%, transparent), var(--void) 92%); }
+  .ah__inner { padding-top: clamp(6rem, 26vw, 20rem); padding-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .crumbs { display: flex; gap: 0.6em; font-family: var(--font-mono); font-size: var(--step--2); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 1.2rem; }
+  .crumbs a { color: var(--ember); }
+  .crumbs a:hover { color: var(--orange); }
+  .ah__title { font-size: var(--step-5); line-height: 1.02; max-width: 20ch; }
+  .ah__lead { margin-top: 1.2rem; font-size: var(--step-1); color: var(--smoke); max-width: 60ch; line-height: 1.5; font-weight: 300; }
+  .ah__meta { display: flex; flex-wrap: wrap; gap: 0.6em; margin-top: 1.5rem; font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); letter-spacing: 0.05em; }
+  .ah__author { color: var(--orange); }
+
+  /* ===== Layout corps + TOC ===== */
+  .ah__layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    padding-top: clamp(2rem, 4vw, 3.5rem);
+  }
+  @media (min-width: 1040px) {
+    .ah__layout { grid-template-columns: 250px minmax(0, 1fr); align-items: start; }
+    .ah__layout .prose { margin-inline: 0; padding-inline: 0; }
+  }
+  .toc { position: sticky; top: 100px; }
+  .toc__inner { display: none; }
+  @media (min-width: 1040px) { .toc__inner { display: block; } }
+  .toc ol { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.55rem; border-left: 1px solid var(--line); }
+  .toc li a { display: block; padding-left: 1rem; font-size: var(--step--1); color: var(--muted); border-left: 2px solid transparent; margin-left: -1px; transition: color 0.3s, border-color 0.3s; }
+  .toc li a:hover { color: var(--paper); border-color: var(--orange); }
+  .toc__lvl-3 a { padding-left: 1.8rem; font-size: var(--step--2); }
+  .toc__share { margin-top: 2rem; }
+  .share { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+  .share__btn {
+    display: grid; place-items: center;
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--line-strong); color: var(--muted);
+    font-size: var(--step--1); transition: 0.3s;
+  }
+  .share__btn:hover { background: var(--orange); color: #000; border-color: var(--orange); }
+
+  /* ===== Takeaways ===== */
+  .takeaways {
+    background: linear-gradient(145deg, color-mix(in oklab, var(--orange) 14%, var(--ink)), var(--ink));
+    border: 1px solid color-mix(in oklab, var(--orange) 30%, transparent);
+    border-radius: var(--r-lg);
+    padding: clamp(1.4rem, 3vw, 2rem);
+    margin-bottom: 2.5rem;
+  }
+  .takeaways__label { display: inline-block; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.16em; font-size: var(--step--2); color: var(--orange); margin-bottom: 0.9rem; }
+  .takeaways ul { display: grid; gap: 0.7rem; }
+  .takeaways li { position: relative; padding-left: 1.7rem; color: var(--paper); }
+  .takeaways li::before { content: '→'; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
+
+  /* ===== Pending ===== */
+  .pending { border: 1px dashed var(--line-strong); border-radius: var(--r-lg); padding: clamp(1.6rem, 4vw, 2.6rem); }
+  .pending p { color: var(--smoke); margin-top: 1rem; }
+  .pending__teaser { color: var(--muted); font-style: italic; border-top: 1px solid var(--line); padding-top: 1rem; }
+
+  /* ===== Article foot ===== */
+  .article-foot { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+  .pill { font-family: var(--font-mono); font-size: var(--step--2); padding: 0.4em 0.9em; border: 1px solid var(--line-strong); border-radius: 100px; color: var(--ember); }
+  .pill--tag { color: var(--muted); }
+
+  .related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1.5rem, 3vw, 2.5rem); }
+  @media (max-width: 800px) { .related-grid { grid-template-columns: 1fr; } }
+
+  .sec-head h2 { font-size: var(--step-4); margin-top: 0.4rem; }
+  .sec-head--split { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+</style>

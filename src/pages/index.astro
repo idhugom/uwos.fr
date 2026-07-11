@@ -1,0 +1,164 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import Ticker from '../components/Ticker.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import CategoryRail from '../components/CategoryRail.astro';
+import FilList from '../components/FilList.astro';
+import { SITE } from '../lib/site.js';
+import { categoryOf } from '../lib/taxonomy.js';
+
+const all = (await getCollection('articles')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const featured = all[0];
+const tickerItems = all.slice(0, 12).map((e) => ({ title: e.data.title, href: `/${e.id}/` }));
+const broadsheet = all.slice(1, 8);
+const filLatest = all.slice(8, 20);
+
+// rubriques ayant assez d'articles pour un rail, par volume
+const byCat = new Map();
+for (const e of all) {
+  const c = e.data.category;
+  if (!byCat.has(c)) byCat.set(c, []);
+  byCat.get(c).push(e);
+}
+const railCats = [...byCat.entries()]
+  .filter(([, arr]) => arr.length >= 6)
+  .sort((a, b) => b[1].length - a[1].length)
+  .slice(0, 4)
+  .map(([slug, arr]) => ({ slug, entries: arr.slice(0, 10) }));
+
+const exploreCats = SITE.categories.filter((c) => byCat.has(c.slug));
+---
+
+<BaseLayout>
+  <Hero entry={featured} count={all.length} />
+  <Ticker items={tickerItems} label="Le fil" />
+
+  <!-- ===================== À LA UNE (broadsheet asymétrique) ===================== -->
+  <section id="a-la-une" class="alaune section wrap">
+    <header class="sec-head" data-reveal>
+      <span class="kicker">Ce qu'il faut lire</span>
+      <h2>À la une</h2>
+    </header>
+
+    <div class="broadsheet">
+      <div class="broadsheet__feature">
+        <ArticleCard entry={broadsheet[0]} variant="feature" eager={true} showExcerpt={true} />
+      </div>
+      <div class="broadsheet__side">
+        {broadsheet.slice(1, 4).map((e) => (
+          <ArticleCard entry={e} variant="compact" />
+        ))}
+      </div>
+      <div class="broadsheet__row">
+        {broadsheet.slice(4, 7).map((e, i) => (
+          <ArticleCard entry={e} index={i + 2} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RUBRIQUES (rails horizontaux) ===================== -->
+  {railCats.map((rc) => <CategoryRail category={rc.slug} entries={rc.entries} />)}
+
+  <!-- ===================== LE FIL ===================== -->
+  <section class="section wrap">
+    <header class="sec-head sec-head--split" data-reveal>
+      <div>
+        <span class="kicker">En continu</span>
+        <h2>Le fil</h2>
+      </div>
+      <a href="/le-fil/" class="btn btn--ghost">Tout le fil <span aria-hidden="true">→</span></a>
+    </header>
+    <FilList entries={filLatest} start={1} />
+  </section>
+
+  <!-- ===================== EXPLORER LES RUBRIQUES ===================== -->
+  <section class="explore section" data-reveal>
+    <div class="wrap">
+      <header class="sec-head"><span class="kicker">Naviguer</span><h2>Explorer par rubrique</h2></header>
+      <ul class="explore__grid">
+        {exploreCats.map((c, i) => (
+          <li>
+            <a href={`/rubrique/${c.slug}/`} class="explore__cell" data-cursor>
+              <span class="explore__idx">{String(i + 1).padStart(2, '0')}</span>
+              <span class="explore__label">{c.label}</span>
+              <span class="explore__tag">{c.tagline}</span>
+              <span class="explore__count">{byCat.get(c.slug)?.length ?? 0} articles</span>
+              <span class="explore__arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .sec-head { margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .sec-head h2 { font-size: var(--step-5); margin-top: 0.4rem; }
+  .sec-head--split { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+
+  /* ---- Broadsheet ---- */
+  .broadsheet {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: clamp(1.5rem, 3vw, 3rem);
+  }
+  .broadsheet__feature { grid-row: span 2; }
+  .broadsheet__side { display: flex; flex-direction: column; gap: 1.4rem; }
+  .broadsheet__row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    padding-top: clamp(1rem, 2vw, 2rem);
+    border-top: 1px solid var(--line);
+  }
+  @media (max-width: 900px) {
+    .broadsheet { grid-template-columns: 1fr; }
+    .broadsheet__feature { grid-row: auto; }
+    .broadsheet__row { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .broadsheet__row { grid-template-columns: 1fr; }
+  }
+
+  /* ---- Explorer ---- */
+  .explore { background: var(--ink); border-block: 1px solid var(--line); }
+  .explore__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .explore__cell {
+    position: relative;
+    display: grid;
+    gap: 0.35rem;
+    padding: clamp(1.4rem, 2.5vw, 2.2rem);
+    background: var(--ink);
+    min-height: 190px;
+    transition: background 0.4s var(--ease);
+    overflow: hidden;
+  }
+  .explore__cell::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(120% 120% at 100% 0%, color-mix(in oklab, var(--orange) 40%, transparent), transparent 55%);
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .explore__cell:hover { background: var(--ink-2); }
+  .explore__cell:hover::before { opacity: 0.4; }
+  .explore__idx { font-family: var(--font-mono); font-size: var(--step--2); color: var(--orange); }
+  .explore__label { font-family: var(--font-display); font-weight: 800; font-size: var(--step-2); line-height: 1; }
+  .explore__tag { color: var(--muted); font-size: var(--step--1); }
+  .explore__count { margin-top: auto; font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); }
+  .explore__arrow { position: absolute; top: 1.4rem; right: 1.4rem; color: var(--orange); font-size: 1.2rem; opacity: 0; transform: translate(-6px, 6px); transition: 0.4s var(--ease); }
+  .explore__cell:hover .explore__arrow { opacity: 1; transform: none; }
+</style>

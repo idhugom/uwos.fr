@@ -1,0 +1,236 @@
+/* =========================================================================
+   UWOS — Design System
+   Noir profond + orange incandescent. Magazine éditorial, brut & cinétique.
+   ========================================================================= */
+
+:root {
+  /* ---- Couleurs ---- */
+  --void: #060504;
+  --ink: #0b0a08;
+  --ink-2: #12100e;
+  --coal: #17140f;
+  --surface: #1a160f;
+  --surface-2: #221d14;
+
+  --orange: #ff5a00;      /* accent principal — orange très vif */
+  --orange-bright: #ff7a1a;
+  --orange-deep: #e64500;
+  --ember: #ff9245;
+  --amber: #ffb066;
+
+  --paper: #f7f2e9;       /* off-white chaud */
+  --white: #fdfcfb;
+  --smoke: #b7afa2;
+  --muted: #9a938a;
+  --faint: #6b655c;
+
+  --line: color-mix(in oklab, var(--paper) 14%, transparent);
+  --line-strong: color-mix(in oklab, var(--paper) 26%, transparent);
+  --glass: color-mix(in oklab, var(--paper) 5%, transparent);
+
+  /* ---- Typo ---- */
+  --font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', sans-serif;
+  --font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', monospace;
+
+  /* Échelle fluide */
+  --step--2: clamp(0.69rem, 0.66rem + 0.15vw, 0.78rem);
+  --step--1: clamp(0.83rem, 0.79rem + 0.22vw, 0.95rem);
+  --step-0: clamp(1rem, 0.95rem + 0.27vw, 1.15rem);
+  --step-1: clamp(1.2rem, 1.12rem + 0.4vw, 1.5rem);
+  --step-2: clamp(1.44rem, 1.31rem + 0.66vw, 2rem);
+  --step-3: clamp(1.73rem, 1.52rem + 1.05vw, 2.75rem);
+  --step-4: clamp(2.07rem, 1.74rem + 1.66vw, 3.75rem);
+  --step-5: clamp(2.49rem, 1.96rem + 2.66vw, 5.5rem);
+  --step-6: clamp(2.99rem, 2.1rem + 4.4vw, 8rem);
+  --step-7: clamp(3.4rem, 1.9rem + 7.5vw, 12rem);
+
+  /* ---- Espacement ---- */
+  --gap: clamp(1rem, 0.8rem + 1vw, 1.75rem);
+  --pad-x: clamp(1.1rem, 0.4rem + 3.2vw, 4rem);
+  --section: clamp(3.5rem, 2rem + 7vw, 8rem);
+  --maxw: 1480px;
+  --readw: 46rem;
+
+  /* ---- Rayons / ombres ---- */
+  --r-sm: 6px;
+  --r: 14px;
+  --r-lg: 22px;
+  --r-xl: 34px;
+  --shadow: 0 22px 60px -24px rgba(0, 0, 0, 0.8);
+  --glow: 0 0 0 1px color-mix(in oklab, var(--orange) 40%, transparent),
+    0 12px 44px -8px color-mix(in oklab, var(--orange) 55%, transparent);
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.83, 0, 0.17, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur: 0.55s;
+
+  color-scheme: dark;
+}
+
+/* ===================== Reset ===================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-color: var(--orange-deep) var(--ink);
+}
+body {
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  color: var(--paper);
+  background: var(--void);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+  min-height: 100dvh;
+  font-variant-ligatures: common-ligatures;
+}
+img, picture, svg, video { display: block; max-width: 100%; height: auto; }
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { background: none; border: none; cursor: pointer; }
+ul, ol { list-style: none; padding: 0; }
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; border-radius: 2px; }
+::selection { background: var(--orange); color: #000; }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Grain global fixe — signature "média brut" */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===================== Layout utils ===================== */
+.wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--pad-x); }
+.wrap-read { width: 100%; max-width: var(--readw); margin-inline: auto; padding-inline: var(--pad-x); }
+.section { padding-block: var(--section); }
+.stack > * + * { margin-top: var(--gap); }
+
+/* ===================== Kicker / labels ===================== */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--orange);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-weight: 500;
+}
+.kicker::before {
+  content: '';
+  width: 1.6em;
+  height: 1px;
+  background: var(--orange);
+}
+.tag {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ===================== Boutons ===================== */
+.btn {
+  --bg: var(--orange);
+  --fg: #0a0503;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.85em 1.5em;
+  background: var(--bg);
+  color: var(--fg);
+  font-weight: 650;
+  border-radius: 100px;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.4s var(--spring), box-shadow 0.4s var(--ease);
+  will-change: transform;
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--white);
+  transform: translateY(101%);
+  transition: transform 0.5s var(--ease);
+}
+.btn:hover { box-shadow: var(--glow); }
+.btn:hover::after { transform: translateY(0); }
+.btn--ghost {
+  --bg: transparent;
+  --fg: var(--paper);
+  border: 1px solid var(--line-strong);
+}
+.btn--ghost:hover { color: #0a0503; }
+
+/* ===================== Liens animés ===================== */
+.link-underline {
+  background-image: linear-gradient(var(--orange), var(--orange));
+  background-size: 0% 2px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.4s var(--ease);
+  padding-bottom: 2px;
+}
+.link-underline:hover { background-size: 100% 2px; }
+
+/* ===================== Scroll reveal ===================== */
+/* Gaté par .js : sans JavaScript, tout le contenu reste visible (robustesse + SEO). */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.js [data-reveal].is-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] { opacity: 1; transform: none; transition: none; }
+  * { animation-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+/* ===================== Marquee ===================== */
+.marquee { display: flex; overflow: clip; user-select: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.marquee__track { display: flex; flex-shrink: 0; gap: 0; animation: marquee var(--marquee-dur, 40s) linear infinite; }
+.marquee:hover .marquee__track { animation-play-state: paused; }
+@keyframes marquee { to { transform: translateX(-100%); } }
+
+/* ===================== Divers ===================== */
+.hide { display: none !important; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+hr { border: none; border-top: 1px solid var(--line); }
+
+/* Curseur custom (desktop uniquement) */
+@media (hover: hover) and (pointer: fine) {
+  .cursor-dot, .cursor-ring { position: fixed; top: 0; left: 0; z-index: 9998; pointer-events: none; border-radius: 50%; mix-blend-mode: difference; }
+  .cursor-dot { width: 7px; height: 7px; background: var(--orange); transform: translate(-50%, -50%); }
+  .cursor-ring { width: 38px; height: 38px; border: 1px solid var(--orange); transform: translate(-50%, -50%); transition: width 0.3s var(--ease), height 0.3s var(--ease), background 0.3s; }
+  .cursor-ring.is-hover { width: 62px; height: 62px; background: color-mix(in oklab, var(--orange) 18%, transparent); }
+  body.has-cursor, body.has-cursor * { cursor: none !important; }
+}

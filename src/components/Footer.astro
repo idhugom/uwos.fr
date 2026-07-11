@@ -1,0 +1,134 @@
+---
+import { SITE } from '../lib/site.js';
+const year = new Date().getFullYear();
+const cats = SITE.categories;
+---
+
+<footer class="footer">
+  <div class="footer__cta wrap">
+    <div class="footer__cta-text">
+      <span class="kicker">La newsletter UWOS</span>
+      <h2>Le meilleur du quotidien,<br /><em>une fois par semaine.</em></h2>
+    </div>
+    <form class="news" onsubmit="return false" aria-label="Inscription newsletter">
+      <input type="email" placeholder="votre@email.fr" aria-label="Votre email" required />
+      <button type="submit" class="btn">S'inscrire →</button>
+    </form>
+  </div>
+
+  <div class="footer__grid wrap">
+    <div class="footer__col footer__brand">
+      <img src="/logo-white.png" alt={SITE.name} width="354" height="90" />
+      <p>{SITE.description}</p>
+      <div class="footer__social">
+        {SITE.social.map((s) => (
+          <a href={s.href} class="link-underline" rel="noopener" target="_blank">{s.label}</a>
+        ))}
+      </div>
+    </div>
+
+    <nav class="footer__col" aria-label="Rubriques">
+      <span class="tag">Rubriques</span>
+      <ul>
+        {cats.slice(0, 8).map((c) => (
+          <li><a href={`/rubrique/${c.slug}/`} class="link-underline">{c.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+
+    <nav class="footer__col" aria-label="Le média">
+      <span class="tag">Le média</span>
+      <ul>
+        <li><a href="/a-propos/" class="link-underline">À propos</a></li>
+        <li><a href="/le-fil/" class="link-underline">Le fil</a></li>
+        <li><a href="/rubriques/" class="link-underline">Toutes les rubriques</a></li>
+        <li><a href="/recherche/" class="link-underline">Recherche</a></li>
+        <li><a href="/rss.xml" class="link-underline">Flux RSS</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="footer__mark" aria-hidden="true">
+    <span>UWOS</span>
+  </div>
+
+  <div class="footer__legal wrap">
+    <p>© {SITE.since}–{year} {SITE.name}. Média généraliste indépendant. Tous droits réservés.</p>
+    <p><a href="/mentions-legales/" class="link-underline">Mentions légales</a> · <a href="/a-propos/" class="link-underline">Contact</a></p>
+  </div>
+</footer>
+
+<style>
+  .footer { margin-top: var(--section); border-top: 1px solid var(--line); background: var(--ink); overflow: clip; }
+
+  .footer__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-block: clamp(2.5rem, 5vw, 4.5rem);
+    border-bottom: 1px solid var(--line);
+  }
+  .footer__cta h2 { font-size: var(--step-3); margin-top: 0.6rem; }
+  .footer__cta h2 em { color: var(--orange); font-style: normal; }
+  .news { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .news input {
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 100px;
+    padding: 0.85em 1.3em;
+    min-width: 260px;
+    color: var(--paper);
+  }
+  .news input:focus { outline: none; border-color: var(--orange); }
+
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    padding-block: clamp(2.5rem, 5vw, 4rem);
+  }
+  .footer__brand img { height: 26px; width: auto; margin-bottom: 1.2rem; }
+  .footer__brand p { color: var(--muted); max-width: 42ch; font-size: var(--step--1); }
+  .footer__social { display: flex; gap: 1.2rem; margin-top: 1.4rem; }
+  .footer__col ul { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 1.2rem; }
+  .footer__col a { color: var(--smoke); }
+  .footer__col a:hover { color: var(--paper); }
+
+  .footer__mark {
+    display: flex;
+    justify-content: center;
+    line-height: 0.72;
+    padding-inline: 1rem;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .footer__mark span {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(4rem, 21vw, 21rem);
+    letter-spacing: -0.04em;
+    background: linear-gradient(180deg, color-mix(in oklab, var(--paper) 12%, transparent), transparent 92%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--line-strong);
+  }
+
+  .footer__legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding-block: 2rem;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-size: var(--step--2);
+  }
+
+  @media (max-width: 720px) {
+    .footer__grid { grid-template-columns: 1fr 1fr; }
+    .footer__brand { grid-column: 1 / -1; }
+  }
+</style>

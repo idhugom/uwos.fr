@@ -1,0 +1,45 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FilList from '../../components/FilList.astro';
+
+export async function getStaticPaths({ paginate }) {
+  const all = (await getCollection('articles')).sort(
+    (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+  );
+  return paginate(all, { pageSize: 40 });
+}
+const { page } = Astro.props;
+---
+
+<BaseLayout
+  title="Le fil — tous les articles"
+  description="Le fil UWOS : tous nos articles, du plus récent au plus ancien. Maison, bien-être, business, tech, finance, cuisine et plus encore."
+  canonical={page.currentPage === 1 ? '/le-fil/' : `/le-fil/${page.currentPage}/`}
+>
+  <section class="wrap" style="padding-top: clamp(3rem,8vw,6rem)">
+    <header class="fil-head">
+      <span class="kicker">En continu</span>
+      <h1>Le fil</h1>
+      <p>{page.total} articles · du plus récent au plus ancien</p>
+    </header>
+    <FilList entries={page.data} start={(page.currentPage - 1) * 40 + 1} />
+
+    <nav class="pager" aria-label="Pagination">
+      {page.url.prev ? <a href={page.url.prev} class="pager__btn">← Récents</a> : <span class="pager__btn is-disabled">← Récents</span>}
+      <span class="pager__count">Page {page.currentPage} / {page.lastPage}</span>
+      {page.url.next ? <a href={page.url.next} class="pager__btn">Plus anciens →</a> : <span class="pager__btn is-disabled">Plus anciens →</span>}
+    </nav>
+  </section>
+</BaseLayout>
+
+<style>
+  .fil-head { margin-bottom: 2rem; }
+  .fil-head h1 { font-size: var(--step-6); margin-top: 0.4rem; }
+  .fil-head p { font-family: var(--font-mono); color: var(--faint); margin-top: 0.6rem; letter-spacing: 0.06em; }
+  .pager { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-top: 4rem; }
+  .pager__btn { font-family: var(--font-mono); font-size: var(--step--1); padding: 0.6em 1.2em; border: 1px solid var(--line-strong); border-radius: 100px; transition: 0.3s; }
+  .pager__btn:hover:not(.is-disabled) { background: var(--orange); color: #000; border-color: var(--orange); }
+  .pager__btn.is-disabled { opacity: 0.3; }
+  .pager__count { font-family: var(--font-mono); font-size: var(--step--2); color: var(--faint); }
+</style>

@@ -1,0 +1,57 @@
+---
+interface Item { title: string; href: string; }
+interface Props { items: Item[]; label?: string; }
+const { items, label = 'À la une' } = Astro.props;
+const doubled = [...items, ...items];
+---
+
+<div class="ticker" data-cursor>
+  <span class="ticker__label">{label}</span>
+  <div class="marquee" style="--marquee-dur: 48s">
+    <div class="marquee__track">
+      {doubled.map((it) => (
+        <a href={it.href} class="ticker__item">
+          <span class="ticker__star">✳</span>{it.title}
+        </a>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .ticker {
+    display: flex;
+    align-items: stretch;
+    border-block: 1px solid var(--line);
+    background: color-mix(in oklab, var(--ink) 60%, transparent);
+    font-family: var(--font-mono);
+    height: 46px;
+    overflow: clip;
+  }
+  .ticker__label {
+    display: inline-flex;
+    align-items: center;
+    padding-inline: clamp(1rem, 3vw, 2rem);
+    background: var(--orange);
+    color: #0a0503;
+    font-size: var(--step--2);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ticker .marquee { flex: 1; align-items: center; }
+  .ticker__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+    padding-inline: 1.4rem;
+    font-size: var(--step--1);
+    color: var(--smoke);
+    white-space: nowrap;
+    transition: color 0.3s;
+  }
+  .ticker__item:hover { color: var(--orange); }
+  .ticker__star { color: var(--orange); font-size: 0.7em; }
+</style>

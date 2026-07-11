@@ -1,0 +1,22 @@
+# build output
+dist/
+.astro/
+
+# deps
+node_modules/
+
+# env / secrets — never commit tokens
+.env
+.env.*
+!.env.example
+
+# batch working files (large, regenerable)
+data/batch/*.jsonl
+data/batch/*.output
+!data/batch/.gitkeep
+
+# os / editor
+.DS_Store
+*.log
+npm-debug.log*
+data/batch-test/
