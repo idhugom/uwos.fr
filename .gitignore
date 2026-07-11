@@ -20,3 +20,4 @@ data/batch/*.output
 *.log
 npm-debug.log*
 data/batch-test/
+data/batch/state.json
